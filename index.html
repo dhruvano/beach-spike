@@ -183,9 +183,9 @@ body{background:#0d0820;display:flex;justify-content:center;align-items:center;m
     <button class="cbtn cb-move" onmousedown="kd('KeyS')" onmouseup="ku('KeyS')" ontouchstart="kd('KeyS')" ontouchend="ku('KeyS')">▼</button>
     <button class="cbtn cb-move" onmousedown="kd('KeyD')" onmouseup="ku('KeyD')" ontouchstart="kd('KeyD')" ontouchend="ku('KeyD')">▶</button>
     <button class="cbtn cb-jump" onmousedown="kd('Space')" onmouseup="ku('Space')" ontouchstart="kd('Space')" ontouchend="ku('Space')">JUMP</button>
-    <button class="cbtn cb-bump" onmousedown="kd('KeyJ')" onmouseup="ku('KeyJ')" ontouchstart="kd('KeyJ')" ontouchend="ku('KeyJ')">BUMP</button>
-    <button class="cbtn cb-set" onmousedown="kd('KeyK')" onmouseup="ku('KeyK')" ontouchstart="kd('KeyK')" ontouchend="ku('KeyK')">SET</button>
-    <button class="cbtn cb-spike" onmousedown="kd('KeyL')" onmouseup="ku('KeyL')" ontouchstart="kd('KeyL')" ontouchend="ku('KeyL')">SPIKE</button>
+    <button class="cbtn cb-bump" onmousedown="kd('KeyZ')" onmouseup="ku('KeyZ')" ontouchstart="kd('KeyZ')" ontouchend="ku('KeyZ')">BUMP</button>
+    <button class="cbtn cb-set" onmousedown="kd('KeyX')" onmouseup="ku('KeyX')" ontouchstart="kd('KeyX')" ontouchend="ku('KeyX')">SET</button>
+    <button class="cbtn cb-spike" onmousedown="kd('KeyC')" onmouseup="ku('KeyC')" ontouchstart="kd('KeyC')" ontouchend="ku('KeyC')">SPIKE</button>
     <button class="cbtn cb-serve" onmousedown="kd('Space')" onmouseup="ku('Space')" ontouchstart="kd('Space')" ontouchend="ku('Space')">SERVE</button>
   </div>
 </div>
@@ -402,10 +402,13 @@ function ku(c) { keys[c] = false; }
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (['Space'].includes(e.code)) e.preventDefault();
-  if (e.code === 'ArrowLeft')  { look.tyaw   = Math.max(-YAW_MAX,   look.tyaw  - 0.08); e.preventDefault(); }
-  if (e.code === 'ArrowRight') { look.tyaw   = Math.min( YAW_MAX,   look.tyaw  + 0.08); e.preventDefault(); }
-  if (e.code === 'ArrowUp')    { look.tpitch = Math.min( PITCH_MAX, look.tpitch + 0.07); e.preventDefault(); }
-  if (e.code === 'ArrowDown')  { look.tpitch = Math.max(-PITCH_MAX, look.tpitch - 0.07); e.preventDefault(); }
+  // Arrow keys reserved for P2 movement in 2-player mode
+  if (!twoPlayer) {
+    if (e.code === 'ArrowLeft')  { look.tyaw   = Math.max(-YAW_MAX,   look.tyaw  - 0.08); }
+    if (e.code === 'ArrowRight') { look.tyaw   = Math.min( YAW_MAX,   look.tyaw  + 0.08); }
+    if (e.code === 'ArrowUp')    { look.tpitch = Math.min( PITCH_MAX, look.tpitch + 0.07); }
+    if (e.code === 'ArrowDown')  { look.tpitch = Math.max(-PITCH_MAX, look.tpitch - 0.07); }
+  }
   // P2 look (numpad or IJKL)
   if (e.code === 'KeyI')     { look2.tpitch = Math.min( PITCH_MAX, look2.tpitch + 0.07); }
   if (e.code === 'KeyK')     { look2.tpitch = Math.max(-PITCH_MAX, look2.tpitch - 0.07); }
@@ -643,18 +646,18 @@ function handleMove() {
     else if (keys['ArrowRight']) { p2.vx =  spd; p2.facing= 1; if(p2.onGround)p2.state='walk'; }
     else { p2.vx *= 0.55; if(p2.onGround&&p2.state==='walk')p2.state='idle'; }
     // P2 depth: numpad 8/2 or PageUp/PageDown
-    if (keys['Numpad8']||keys['PageUp'])   { p2.vz =  spd*0.9; }
-    else if (keys['Numpad2']||keys['PageDown']) { p2.vz = -spd*0.9; }
+    if (keys['ArrowUp'])   { p2.vz =  spd*0.9; }
+    else if (keys['ArrowDown']) { p2.vz = -spd*0.9; }
     else { p2.vz *= 0.55; }
     // P2 jump: Numpad0 or RShift
-    if ((keys['Numpad0']||keys['ShiftRight']) && p2.onGround && G.state!=='serve') {
+    if (keys['ShiftRight'] && p2.onGround && G.state!=='serve') {
       p2.jumpCharge = Math.min(1.0,(p2.jumpCharge||0)+0.035);
       p2.charging = true;
     } else if (p2.charging && p2.onGround) {
       let jv = 0.28 + p2.jumpCharge*0.28;
       p2.vy=jv; p2.onGround=false; p2.state='jump'; spawnDust(p2);
       p2.charging=false; p2.jumpCharge=0;
-    } else if (!keys['Numpad0']&&!keys['ShiftRight']) { p2.jumpCharge=0; }
+    } else if (!keys['ShiftRight']) { p2.jumpCharge=0; }
   }
 
   // Jump — hold Space to charge, release to launch
@@ -682,9 +685,9 @@ function handleActions() {
   if (onMySide && canTouch(p)) {
     let d = dist3(p, b);
     if (d < 1.8) {
-      if (keys['KeyJ']) { doBump(p,b); keys['KeyJ']=false; }
-      else if (keys['KeyK']) { doSet(p,b); keys['KeyK']=false; }
-      else if (keys['KeyL']) { doSpike(p,b); keys['KeyL']=false; }
+      if (keys['KeyZ']) { doBump(p,b); keys['KeyZ']=false; }
+      else if (keys['KeyX']) { doSet(p,b); keys['KeyX']=false; }
+      else if (keys['KeyC']) { doSpike(p,b); keys['KeyC']=false; }
     }
   }
   // ── HUMAN BLOCK — Space when near net + spike incoming ──
@@ -693,7 +696,7 @@ function handleActions() {
   let spikeIncoming = b3.sideHits>=1 && !b3.setFloat && b3.vz > 0.8 && b3.z < 0;
   if (nearNet && spikeIncoming && !p.onGround && canTouch(p)) {
     let dBlock = dist3(p, b3);
-    if (dBlock < 2.5 && (keys['Space']||keys['KeyL'])) {
+    if (dBlock < 2.5 && (keys['Space']||keys['KeyC'])) {
       // BLOCK — deflect back
       registerTouch(p, b3);
       b3.vz = -(2.2 + Math.random()*0.8);
@@ -701,7 +704,7 @@ function handleActions() {
       b3.setFloat = false; b3.glow = 22;
       spawnHit(b3.x,b3.y,b3.z,'#ffffaa',1.8); doShake(7);
       showAnn('BLOCK!','');
-      keys['Space']=false; keys['KeyL']=false;
+      keys['Space']=false; keys['KeyC']=false;
     }
   }
 
@@ -711,14 +714,14 @@ function handleActions() {
     if (onP2Side && canTouch(p2)) {
       let d2 = dist3(p2, b);
       if (d2 < 1.8) {
-        if (keys['Numpad1']||keys['KeyU']) { doBump(p2,b); keys['Numpad1']=false; keys['KeyU']=false; }
-        else if (keys['Numpad2_act']||keys['KeyH']) { doSet(p2,b); keys['Numpad2_act']=false; keys['KeyH']=false; }
-        else if (keys['Numpad3']||keys['KeyN']) { doSpike(p2,b); keys['Numpad3']=false; keys['KeyN']=false; }
+        if (keys['Comma']) { doBump(p2,b); keys['Comma']=false; }
+        else if (keys['Period']) { doSet(p2,b); keys['Period']=false; }
+        else if (keys['Slash']) { doSpike(p2,b); keys['Slash']=false; }
       }
     }
     // P2 serve
     if (G.state === 'serve' && G.servingSide === 2) {
-      if (keys['ShiftRight']||keys['Numpad0']) {
+      if (keys['ShiftRight']) {
         G.serveCharge = Math.min(1.0,(G.serveCharge||0)+0.022);
         G.serveCharging = true;
       } else if (G.serveCharging) {
