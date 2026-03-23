@@ -567,8 +567,8 @@ function update() {
     G.ball.x = srv.x; G.ball.z = srv.z; G.ball.y = 2.5; // ball above server at back
 
     if (G.servingSide === 1) {
-      // Hold Space to charge serve power, release to launch
-      if (keys['Space']) {
+      let p1ServeKey = twoPlayer ? keys['ShiftLeft'] : keys['Space'];
+      if (p1ServeKey) {
         G.serveCharge = Math.min(1.0, (G.serveCharge||0) + 0.022);
         G.serveCharging = true;
         document.getElementById('jm-label').textContent = 'SERVE';
@@ -576,7 +576,7 @@ function update() {
         // colour: blue=soft → red=power
         let r=Math.floor(G.serveCharge*220), bl=Math.floor((1-G.serveCharge)*220);
         document.getElementById('jm-fill').style.background = `rgb(${r},80,${bl})`;
-      } else if (G.serveCharging) {
+      } else if (G.serveCharging && !p1ServeKey) {
         doServe(G.p1a, G.serveCharge);
         G.serveCharge=0; G.serveCharging=false;
         document.getElementById('jm-fill').style.width='0%';
@@ -662,12 +662,13 @@ function handleMove() {
 
   // Jump — hold Space to charge, release to launch
   if (G.state !== 'serve') {
-    if (keys['Space'] && p.onGround) {
+    let p1JumpKey = twoPlayer ? keys['ShiftLeft'] : keys['Space'];
+    if (p1JumpKey && p.onGround) {
       p.jumpCharge = Math.min(1.0, (p.jumpCharge || 0) + 0.035);
       p.charging = true;
       document.getElementById('jm-fill').style.width = (p.jumpCharge * 100) + '%';
     } else if (p.charging && p.onGround) {
-      let jv = 0.28 + p.jumpCharge * 0.28; // 0.28 (tap) to 0.56 (full charge)
+      let jv = 0.28 + p.jumpCharge * 0.28;
       p.vy = jv; p.onGround = false; p.state = 'jump';
       spawnDust(p); p.charging = false; p.jumpCharge = 0;
       document.getElementById('jm-fill').style.width = '0%';
@@ -696,7 +697,8 @@ function handleActions() {
   let spikeIncoming = b3.sideHits>=1 && !b3.setFloat && b3.vz > 0.8 && b3.z < 0;
   if (nearNet && spikeIncoming && !p.onGround && canTouch(p)) {
     let dBlock = dist3(p, b3);
-    if (dBlock < 2.5 && (keys['Space']||keys['KeyC'])) {
+    let p1BlockKey = twoPlayer ? keys['ShiftLeft'] : keys['Space'];
+    if (dBlock < 2.5 && (p1BlockKey||keys['KeyC'])) {
       // BLOCK — deflect back
       registerTouch(p, b3);
       b3.vz = -(2.2 + Math.random()*0.8);
@@ -704,7 +706,7 @@ function handleActions() {
       b3.setFloat = false; b3.glow = 22;
       spawnHit(b3.x,b3.y,b3.z,'#ffffaa',1.8); doShake(7);
       showAnn('BLOCK!','');
-      keys['Space']=false; keys['KeyC']=false;
+      keys['Space']=false; keys['ShiftLeft']=false; keys['KeyC']=false;
     }
   }
 
